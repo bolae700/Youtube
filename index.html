@@ -1,420 +1,333 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retro YouTube Player</title>
+    <title>Nexus Player</title>
     <style>
         :root {
-            --red: #E71B1B;
-            --yellow: #FEDE00;
-            --blue: #049CD8;
-            --bg: #1a1a1a;
-            --metal: #7D7D7D;
+            --space-blue: #1a237e;
+            --cyber-teal: #00e5ff;
+            --hologram-white: rgba(255,255,255,0.9);
+            --deep-space: #0a192f;
         }
 
         body {
-            background: var(--bg);
+            background: var(--deep-space);
+            margin: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            margin: 0;
-            font-family: 'Press Start 2P', 'Courier New', monospace;
+            font-family: 'Roboto', sans-serif;
             overflow: hidden;
-            touch-action: manipulation;
         }
 
-        .crt-effect {
+        /* الخلفية العائمة */
+        .floating-bg {
             position: fixed;
-            width: 100%;
-            height: 100%;
-            background: repeating-linear-gradient(
-                0deg,
-                rgba(0, 0, 0, 0.15) 0px,
-                rgba(0, 0, 0, 0.15) 2px,
-                transparent 3px,
-                transparent 4px
-            );
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
             pointer-events: none;
-            z-index: 999;
-            animation: scanline 3s linear infinite;
         }
 
-        @keyframes scanline {
-            from { transform: translateY(-100%); }
-            to { transform: translateY(100%); }
+        .floating-element {
+            position: absolute;
+            opacity: 0.1;
+            animation: float 20s infinite linear;
         }
 
-        .gameboy-frame {
-            width: 340px;
-            background: #6B6B6B;
-            border: 10px solid #4A4A4A;
-            border-radius: 18px;
-            padding: 20px;
-            position: relative;
-            box-shadow: 
-                0 0 20px rgba(0,0,0,0.5),
-                inset 0 0 15px rgba(0,0,0,0.2);
+        .floating-element:nth-child(1) { 
+            top: 10%;
+            left: 5%;
+            width: 50px;
+            height: 50px;
+            background: var(--cyber-teal);
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
         }
 
-        .screen-container {
-            background: #000;
-            border: 6px solid #4A5C2B;
-            padding: 8px;
-            margin-bottom: 15px;
-            position: relative;
-            box-shadow: 
-                inset 0 0 10px rgba(0,0,0,0.5),
-                0 3px 8px rgba(0,0,0,0.3);
+        .floating-element:nth-child(2) {
+            top: 70%;
+            left: 80%;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
         }
 
-        #player {
-            width: 100%;
-            height: 180px;
+        .floating-element:nth-child(3) {
+            top: 30%;
+            left: 90%;
+            width: 30px;
+            height: 30px;
+            background: var(--space-blue);
+            transform: rotate(45deg);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-20px) rotate(10deg); }
+            50% { transform: translateY(20px) rotate(-10deg); }
+            75% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        .player-container {
+            width: 400px;
+            background: rgba(16, 24, 39, 0.95);
+            border-radius: 20px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 0 40px rgba(0, 229, 255, 0.2);
+            overflow: hidden;
+            border: 1px solid rgba(0, 229, 255, 0.3);
             position: relative;
             z-index: 1;
         }
 
-        .screen-overlay {
+        .video-frame {
+            position: relative;
+            padding-top: 56.25%;
+            background: #000;
+        }
+
+        #player {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: 
-                repeating-linear-gradient(
-                    0deg,
-                    rgba(0,0,0,0.1) 0px,
-                    rgba(0,0,0,0.1) 1px,
-                    transparent 2px,
-                    transparent 3px
-                ),
-                linear-gradient(
-                    rgba(0,0,0,0.2) 50%,
-                    rgba(0,0,0,0.3) 50%
-                );
-            pointer-events: none;
-            z-index: 2;
-        }
-
-        .track-info {
-            color: var(--yellow);
-            padding: 10px 0;
-            text-align: center;
-            text-shadow: 2px 2px #000;
-            min-height: 40px;
-            font-size: 0.7em;
-            border-bottom: 2px solid #4A5C2B;
-            margin-bottom: 10px;
+            border: none;
         }
 
         .controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 15px 0;
-        }
-
-        .d-pad {
-            display: grid;
-            grid-template: 
-                ". up ." 28px
-                "left . right" 28px
-                ". down ." 28px / 28px 28px 28px;
-            gap: 4px;
-        }
-
-        .d-pad-btn {
-            width: 28px;
-            height: 28px;
-            background: #4A4A4A;
-            border: 2px solid #333;
-            border-radius: 4px;
-            box-shadow: 0 2px 0 #333;
-            cursor: pointer;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.1s;
-        }
-
-        .d-pad-btn:active {
-            transform: translateY(2px);
-        }
-
-        .action-btns {
-            display: flex;
-            gap: 10px;
-        }
-
-        .game-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: #4A4A4A;
-            border: 3px solid #333;
-            box-shadow: 0 3px 0 #333;
-            cursor: pointer;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.1s;
-        }
-
-        .game-btn:active {
-            transform: translateY(3px);
-            box-shadow: none;
-        }
-
-        .play-btn {
-            background: var(--red);
-            border-color: #B31515;
-            box-shadow: 0 3px 0 #B31515;
+            padding: 20px;
+            position: relative;
         }
 
         .playlist {
-            border-top: 3px solid #4A4A4A;
-            padding-top: 10px;
-            max-height: 120px;
+            max-height: 200px;
             overflow-y: auto;
-        }
-
-        .playlist::-webkit-scrollbar {
-            width: 6px;
-            background: #333;
-        }
-
-        .playlist::-webkit-scrollbar-thumb {
-            background: var(--red);
-            border-radius: 3px;
+            margin-bottom: 15px;
         }
 
         .playlist-item {
-            color: #fff;
-            padding: 8px;
-            margin: 4px 0;
-            background: #333;
-            border: 2px solid #4A4A4A;
-            font-size: 0.6em;
+            padding: 12px;
+            margin: 8px 0;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            color: var(--hologram-white);
             cursor: pointer;
-            transition: all 0.2s;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            border-radius: 3px;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        .playlist-item:hover {
+            background: rgba(0, 229, 255, 0.1);
+            border-left-color: var(--cyber-teal);
         }
 
         .playlist-item.playing {
-            background: var(--red);
-            border-color: #B31515;
-            transform: translateX(5px);
+            background: rgba(0, 229, 255, 0.2);
+            border-left-color: var(--cyber-teal);
         }
 
-        .brand-label {
-            position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #4A4A4A;
-            color: var(--yellow);
-            padding: 3px 12px;
-            border-radius: 4px;
-            font-size: 0.5em;
-            text-shadow: 1px 1px #000;
-            z-index: 3;
+        .control-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
         }
 
-        @media (max-width: 400px) {
-            .gameboy-frame {
-                transform: scale(0.8);
-            }
+        .control-btn {
+            background: transparent;
+            border: 2px solid var(--cyber-teal);
+            color: var(--cyber-teal);
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-btn:hover {
+            background: var(--cyber-teal);
+            color: var(--deep-space);
+            box-shadow: 0 0 15px var(--cyber-teal);
+        }
+
+        .time-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            margin: 15px 0;
+            position: relative;
+        }
+
+        .progress {
+            height: 100%;
+            background: var(--cyber-teal);
+            width: 0%;
+            transition: width 0.1s linear;
+            border-radius: 2px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.2);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--cyber-teal);
+            border-radius: 3px;
         }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;500&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="crt-effect"></div>
-    
-    <div class="gameboy-frame">
-        <div class="brand-label">RETRO PLAYER</div>
-        <div class="screen-container">
+    <div class="floating-bg">
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+    </div>
+
+    <div class="player-container">
+        <div class="video-frame">
             <div id="player"></div>
-            <div class="screen-overlay"></div>
-            <div class="track-info" id="now-playing">جار التحميل...</div>
         </div>
-
+        
         <div class="controls">
-            <div class="d-pad">
-                <button class="d-pad-btn up">▲</button>
-                <button class="d-pad-btn left">◀</button>
-                <button class="d-pad-btn right">▶</button>
-                <button class="d-pad-btn down">▼</button>
+            <div class="playlist">
+                <div class="playlist-item" data-id="WdsOYUygoss">Lève-toi et Danse</div>
+                <div class="playlist-item" data-id="sCzKLjhWVAM">Rien Ne Peut Nous Arrêter</div>
+                <div class="playlist-item" data-id="up_L_UOymfI">Danse Sous La Pluie</div>
+                <div class="playlist-item" data-id="8_u45X95Yc8">Su Presencia Está Cerca</div>
+                <div class="playlist-item" data-id="1f3lSvYNax4">Plus Haut</div>
+                <div class="playlist-item" data-id="QHaFNjo82mY">Vivre avec Toi</div>
+                <div class="playlist-item" data-id="yJg-Y5byMMw">Mortals</div>
+                <div class="playlist-item" data-id="lW9ep22YmlM">Royalty</div>
+                <div class="playlist-item" data-id="UOxkGD8qRB4">POP/STARS</div>
+                <div class="playlist-item" data-id="LTMjsgS_c9M">Hislerim</div>
+                <div class="playlist-item" data-id="8QcgiI0BWe0">Inta Eyh</div>
+                <div class="playlist-item" data-id="gBoEQvNKN_Q">Casablanca</div>
+                <div class="playlist-item" data-id="bziEoDoH7ks">Adelante</div>
+                <div class="playlist-item" data-id="xoWxv2yZXLQ">VILLAIN</div>
             </div>
-
-            <div class="action-btns">
-                <button class="game-btn play-btn" id="play-btn">▶</button>
-                <button class="game-btn" id="stop-btn">■</button>
+            
+            <div class="time-bar">
+                <div class="progress"></div>
             </div>
-        </div>
-
-        <div class="playlist" id="playlist">
-            <div class="playlist-item" data-id="up_L_UOymfI">1. يا أنا يا ليا - عمرو دياب</div>
-            <div class="playlist-item" data-id="sCzKLjhWVAM">2. كان لي قلب - كايروكي</div>
-            <div class="playlist-item" data-id="WdsOYUygoss">3. العيد - محمد منير</div>
-            <div class="playlist-item" data-id="1f3lSvYNax4">4. يا طيرة طيري - أم كلثوم</div>
-            <div class="playlist-item" data-id="8_u45X95Yc8">5. آخر همسة - تامر حسني</div>
+            
+            <div class="control-buttons">
+                <button class="control-btn" id="prev">⏮</button>
+                <button class="control-btn" id="play">▶</button>
+                <button class="control-btn" id="next">⏭</button>
+            </div>
         </div>
     </div>
 
-    <script>
-        class RetroYouTubePlayer {
-            constructor() {
-                this.player = null;
-                this.currentTrack = 0;
-                this.isPlaying = false;
-                this.tracks = Array.from(document.querySelectorAll('.playlist-item'));
-                this.init();
-            }
+<script>
+const playlistItems = document.querySelectorAll('.playlist-item');
+const songs = Array.from(playlistItems).map(item => ({
+    id: item.dataset.id,
+    title: item.textContent
+}));
 
-            init() {
-                this.loadYouTubeAPI();
-                this.setupControls();
-                this.initPlaylist();
-                this.initKeyboardControls();
-            }
+let player;
+let currentSong = 0;
+let isPlaying = false;
 
-            loadYouTubeAPI() {
-                if (!document.getElementById('youtube-api')) {
-                    const tag = document.createElement('script');
-                    tag.id = 'youtube-api';
-                    tag.src = 'https://www.youtube.com/iframe_api';
-                    document.head.appendChild(tag);
-                }
-            }
+// تحميل YouTube API
+const tag = document.createElement('script');
+tag.src = "https://www.youtube.com/iframe_api";
+document.head.appendChild(tag);
 
-            onYouTubeIframeAPIReady() {
-                this.player = new YT.Player('player', {
-                    width: '100%',
-                    height: '180',
-                    playerVars: {
-                        'autoplay': 1,
-                        'controls': 0,
-                        'disablekb': 1,
-                        'modestbranding': 1,
-                        'rel': 0,
-                        'showinfo': 0,
-                        'enablejsapi': 1,
-                        'origin': window.location.origin
-                    },
-                    events: {
-                        'onReady': () => this.onPlayerReady(),
-                        'onStateChange': (e) => this.handleStateChange(e)
-                    }
-                });
-            }
-
-            onPlayerReady() {
-                this.loadTrack(0);
-                this.player.setVolume(50);
-                document.getElementById('now-playing').textContent = this.tracks[0].textContent;
-            }
-
-            handleStateChange(event) {
-                if (event.data === YT.PlayerState.PLAYING) {
-                    this.isPlaying = true;
-                    document.getElementById('play-btn').textContent = '⏸';
-                } else if (event.data === YT.PlayerState.PAUSED) {
-                    this.isPlaying = false;
-                    document.getElementById('play-btn').textContent = '▶';
-                } else if (event.data === YT.PlayerState.ENDED) {
-                    this.nextTrack();
-                }
-            }
-
-            loadTrack(index) {
-                this.currentTrack = index;
-                const videoId = this.tracks[index].dataset.id;
-                this.player.loadVideoById(videoId);
-                this.player.playVideo();
-                document.getElementById('now-playing').textContent = this.tracks[index].textContent;
-                this.highlightCurrentTrack();
-            }
-
-            togglePlay() {
-                if (this.isPlaying) {
-                    this.player.pauseVideo();
-                } else {
-                    this.player.playVideo();
-                }
-            }
-
-            stop() {
-                this.player.stopVideo();
-                this.isPlaying = false;
-                document.getElementById('play-btn').textContent = '▶';
-            }
-
-            volumeUp() {
-                this.player.setVolume(Math.min(100, this.player.getVolume() + 10));
-            }
-
-            volumeDown() {
-                this.player.setVolume(Math.max(0, this.player.getVolume() - 10));
-            }
-
-            nextTrack() {
-                this.currentTrack = (this.currentTrack + 1) % this.tracks.length;
-                this.loadTrack(this.currentTrack);
-            }
-
-            prevTrack() {
-                this.currentTrack = (this.currentTrack - 1 + this.tracks.length) % this.tracks.length;
-                this.loadTrack(this.currentTrack);
-            }
-
-            setupControls() {
-                document.getElementById('play-btn').addEventListener('click', () => this.togglePlay());
-                document.getElementById('stop-btn').addEventListener('click', () => this.stop());
-                document.querySelector('.up').addEventListener('click', () => this.volumeUp());
-                document.querySelector('.down').addEventListener('click', () => this.volumeDown());
-                document.querySelector('.left').addEventListener('click', () => this.prevTrack());
-                document.querySelector('.right').addEventListener('click', () => this.nextTrack());
-            }
-
-            initPlaylist() {
-                this.tracks.forEach((track, index) => {
-                    track.addEventListener('click', () => {
-                        this.loadTrack(index);
-                    });
-                });
-            }
-
-            highlightCurrentTrack() {
-                this.tracks.forEach((track, index) => {
-                    track.classList.toggle('playing', index === this.currentTrack);
-                });
-            }
-
-            initKeyboardControls() {
-                document.addEventListener('keydown', (e) => {
-                    switch(e.code) {
-                        case 'Space': 
-                            e.preventDefault();
-                            this.togglePlay();
-                            break;
-                        case 'ArrowRight': this.nextTrack(); break;
-                        case 'ArrowLeft': this.prevTrack(); break;
-                        case 'ArrowUp': this.volumeUp(); break;
-                        case 'ArrowDown': this.volumeDown(); break;
-                    }
-                });
-            }
+window.onYouTubeIframeAPIReady = () => {
+    player = new YT.Player('player', {
+        height: '100%',
+        width: '100%',
+        playerVars: {
+            'autoplay': 0,
+            'controls': 0,
+            'modestbranding': 1,
+            'enablejsapi': 1
+        },
+        events: {
+            'onReady': () => loadSong(0),
+            'onStateChange': onPlayerStateChange
         }
+    });
+};
 
-        window.onYouTubeIframeAPIReady = () => new RetroYouTubePlayer().onYouTubeIframeAPIReady();
-    </script>
+function loadSong(index) {
+    currentSong = index;
+    player.loadVideoById(songs[index].id);
+    updatePlaylist();
+}
+
+function updatePlaylist() {
+    playlistItems.forEach((item, index) => {
+        item.classList.toggle('playing', index === currentSong);
+    });
+}
+
+document.getElementById('play').addEventListener('click', () => {
+    if (player.getPlayerState() === YT.PlayerState.PLAYING) {
+        player.pauseVideo();
+    } else {
+        player.playVideo();
+    }
+    updatePlayButton();
+});
+
+document.getElementById('next').addEventListener('click', () => {
+    currentSong = (currentSong + 1) % songs.length;
+    loadSong(currentSong);
+    player.playVideo();
+});
+
+document.getElementById('prev').addEventListener('click', () => {
+    currentSong = (currentSong - 1 + songs.length) % songs.length;
+    loadSong(currentSong);
+    player.playVideo();
+});
+
+function onPlayerStateChange(event) {
+    const playBtn = document.getElementById('play');
+    if (event.data === YT.PlayerState.ENDED) {
+        currentSong = (currentSong + 1) % songs.length;
+        loadSong(currentSong);
+        player.playVideo();
+    }
+    updatePlayButton();
+}
+
+function updatePlayButton() {
+    const playBtn = document.getElementById('play');
+    playBtn.textContent = player.getPlayerState() === YT.PlayerState.PLAYING ? '⏸' : '▶';
+}
+
+// تحديث شريط التقدم
+setInterval(() => {
+    if (player.getPlayerState() === YT.PlayerState.PLAYING) {
+        const progress = (player.getCurrentTime() / player.getDuration()) * 100;
+        document.querySelector('.progress').style.width = `${progress}%`;
+    }
+}, 1000);
+
+// تفاعل قائمة التشغيل
+playlistItems.forEach((item, index) => {
+    item.addEventListener('click', () => {
+        currentSong = index;
+        loadSong(currentSong);
+        player.playVideo();
+    });
+});
+</script>
 </body>
 </html>
